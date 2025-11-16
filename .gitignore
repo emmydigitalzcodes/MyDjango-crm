@@ -1,0 +1,12 @@
+(
+echo # Django
+echo *.log
+echo *.pot
+echo *.pyc
+echo __pycache__/
+echo db.sqlite3
+echo mediafiles/
+echo staticfiles/
+echo .env
+echo .venv/
+) >> .gitignore
