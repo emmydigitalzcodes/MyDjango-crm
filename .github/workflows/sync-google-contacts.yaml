@@ -2,22 +2,13 @@ name: Sync Google Contacts
 
 on:
   workflow_dispatch:
-
 jobs:
-  sync-contacts:
-    runs-on: ubuntu-latest
-    
+  build:
+    runs-on: ubuntu-latest    
     steps:
-    - name: Checkout repository
+    - name: Checkout mydjango-crm
       uses: actions/checkout@v4
-      
-    - name: Setup Python and uv
+    - name: Install uv with all available options
       uses: astral-sh/setup-uv@v7
-      with:
-        python-version: '3.11'
-        
-    - name: Install dependencies
-      run: uv sync
-      
-    - name: Run basic test
-      run: uv run python -c "print('Setup successful!')"
+    - name: Sync deps for Python
+      run: uv sync --frozen
