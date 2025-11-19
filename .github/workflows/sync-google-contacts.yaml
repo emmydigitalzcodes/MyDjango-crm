@@ -2,25 +2,70 @@ name: Sync Google Contacts
 
 on:
   workflow_dispatch:
+
 jobs:
-  build:
+  sync-contacts:
     runs-on: ubuntu-latest 
+    
     env:    
-       DJANGO_DEBUG: "true"
-       GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
-       GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
-       DATABASE_URL: ${{ secrets.DATABASE_URL}}
+      DJANGO_DEBUG: "true"
+      GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      
     steps:
-    - name: Checkout mydjango-crm
+    - name: Checkout repository
       uses: actions/checkout@v4
-    - name: Install uv with all available options
+      
+    - name: Setup Python and uv
       uses: astral-sh/setup-uv@v7
-    - name: Sync deps for Python
-      run: uv sync --frozen
-    - name: Setup Django Secret Key One Off
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: uv sync
+      
+    - name: Generate Django Secret Key
       run: |
         MY_SECRET_KEY=$(openssl rand -base64 32)
         echo "DJANGO_SECRET_KEY=$MY_SECRET_KEY" >> $GITHUB_ENV
+        
+    - name: Create environment file
+      working-directory: ./mcc
+      run: |
+        echo "DJANGO_SECRET_KEY=${{ env.DJANGO_SECRET_KEY }}" > .env
+        echo "DJANGO_DEBUG=${{ env.DJANGO_DEBUG }}" >> .env
+        echo "GOOGLE_OAUTH_CLIENT_ID=${{ env.GOOGLE_OAUTH_CLIENT_ID }}" >> .env
+        echo "GOOGLE_OAUTH_CLIENT_SECRET=${{ env.GOOGLE_OAUTH_CLIENT_SECRET }}" >> .env
+        echo "DATABASE_URL=${{ env.DATABASE_URL }}" >> .env
+        
+    - name: Run database migrations
+      working-directory: ./mcc
+      run: uv run python manage.py migrate
+      
+    - name: Create test user if no users exist
+      working-directory: ./mcc
+      run: |
+        uv run python manage.py shell -c "
+from django.contrib.auth import get_user_model
+User = get_user_model()
+if not User.objects.exists():
+    user = User.objects.create_user('test@example.com', 'testpass123')
+    user.save()
+    print('✅ Created test user')
+else:
+    print('✅ Users already exist in database')
+        "
+        
     - name: Run Django Management Command for contact sync
       working-directory: ./mcc
       run: uv run python manage.py sync_contacts --max-results 2
+      
+    - name: Verify contacts were synced
+      working-directory: ./mcc
+      run: |
+        uv run python manage.py shell -c "
+from contacts.models import Contact
+count = Contact.objects.count()
+print(f'✅ Total contacts in database: {count}')
+        "
