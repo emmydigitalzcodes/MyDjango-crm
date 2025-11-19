@@ -9,7 +9,7 @@ jobs:
        DJANGO_DEBUG: "true"
        GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
        GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
-       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+       DATABASE_URL: ${{ secrets.DATABASE_URL}}
     steps:
     - name: Checkout mydjango-crm
       uses: actions/checkout@v4
@@ -21,23 +21,6 @@ jobs:
       run: |
         MY_SECRET_KEY=$(openssl rand -base64 32)
         echo "DJANGO_SECRET_KEY=$MY_SECRET_KEY" >> $GITHUB_ENV
-    - name: Create environment file
-      working-directory: ./mcc
-      run: |
-        echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" > .env
-        echo "DJANGO_DEBUG=$DJANGO_DEBUG" >> .env
-        echo "GOOGLE_OAUTH_CLIENT_ID=$GOOGLE_OAUTH_CLIENT_ID" >> .env
-        echo "GOOGLE_OAUTH_CLIENT_SECRET=$GOOGLE_OAUTH_CLIENT_SECRET" >> .env
-        echo "DATABASE_URL=$DATABASE_URL" >> .env
-    - name: Check management commands structure
-      working-directory: ./mcc
-      run: |
-        ls -la contacts/management/
-        ls -la contacts/management/commands/
-        find . -name "sync_contacts.py" -type f
-    - name: Run migrations
-      working-directory: ./mcc
-      run: uv run python manage.py migrate
     - name: Run Django Management Command for contact sync
       working-directory: ./mcc
       run: uv run python manage.py sync_contacts --max-results 2
