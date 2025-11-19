@@ -10,7 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +24,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-l6%38a6+s%)a4l8&bdj6*_t(vpd19v9x4hlee-srd6=ic2t5m*"
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = (
+    str(os.environ.get("DJANGO_DEBUG")).lower() == "true"
+)  # config("DJANGO_DEBUG", cast=bool)
 
 ALLOWED_HOSTS = []
+
+AUTH_USER_MODEL = "auth.user"
+LOGIN_REDIRECT_URL = "/"
 
 
 # Application definition
@@ -37,10 +46,20 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # third-party
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",  # Optional: for logout
+    "django_googler",
+    # internal
+    "contacts",
+    "dashboard",
+    "events",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -50,11 +69,11 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "emmyhome.urls"
-
+TEMPLATES_DIR = BASE_DIR / "templates"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [TEMPLATES_DIR],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -78,6 +97,18 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL:
+    import dj_database_url  # noqa
+
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            engine="timescale.db.backends.postgresql",
+            conn_max_age=600,
+        )
+    }
 
 
 # Password validation
@@ -115,8 +146,27 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "local-cdn"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "mystaticfiles",
+]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+### DJANGO GOOGLER CONFIG
+
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID")
+GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET")
+
+GOOGLE_OAUTH_SCOPES = [
+    "openid",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "https://www.googleapis.com/auth/contacts.other.readonly",
+    "https://www.googleapis.com/auth/contacts.readonly",
+]
