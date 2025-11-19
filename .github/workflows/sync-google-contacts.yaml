@@ -4,7 +4,9 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    runs-on: ubuntu-latest    
+    runs-on: ubuntu-latest 
+    env: 
+       GOOGLE_OAUTH_CLIENT_ID: "some value"    
     steps:
     - name: Checkout mydjango-crm
       uses: actions/checkout@v4
