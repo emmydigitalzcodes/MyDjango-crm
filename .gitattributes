@@ -1,0 +1,5 @@
+mcc/local-cdn/* linguist-vendored
+mcc/mystaticfiles/* linguist-vendored
+*.css linguist-vendored
+*.js linguist-vendored
+*.html linguist-vendored
