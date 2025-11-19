@@ -29,12 +29,12 @@ jobs:
         echo "GOOGLE_OAUTH_CLIENT_ID=$GOOGLE_OAUTH_CLIENT_ID" >> .env
         echo "GOOGLE_OAUTH_CLIENT_SECRET=$GOOGLE_OAUTH_CLIENT_SECRET" >> .env
         echo "DATABASE_URL=$DATABASE_URL" >> .env
-    - name: Debug file structure
+    - name: Check management commands structure
       working-directory: ./mcc
-      run: find . -name "sync_contacts.py" -type f
-    - name: List available commands
-      working-directory: ./mcc
-      run: uv run python manage.py help
+      run: |
+        ls -la contacts/management/
+        ls -la contacts/management/commands/
+        find . -name "sync_contacts.py" -type f
     - name: Run migrations
       working-directory: ./mcc
       run: uv run python manage.py migrate
