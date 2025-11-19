@@ -19,8 +19,8 @@ jobs:
       run: uv sync --frozen
     - name: Setup Django Secret Key One Off
       run: |
-        MY_SECRET_KEY=$(openssl rand .base64 32)
-        echo "DJANGO_SECRET_KEY=$MY_SECRET_KEY" >> $GITHUB_EVN
+        MY_SECRET_KEY=$(openssl rand -base64 32)
+        echo "DJANGO_SECRET_KEY=$MY_SECRET_KEY" >> $GITHUB_ENV
     - name: Run Django Management Command for contact sync
       working-directory: ./mcc
       run: uv run python manage.py sync_contacts --max-results 2
